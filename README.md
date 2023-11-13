@@ -47,3 +47,24 @@ auto main(int argc, char** argv) -> int {
 }
 ```
 Note that unlike normal return value from a function, you cannot ignore the result, and you must check whether you were successful or not.
+
+## Tests and Eamples
+The examples section here will contain more examples on how to use this. Take a look there.
+To run the unit test:
+```sh
+docker build -t test-image ,
+```
+And then
+```sh
+export GID=$(id -g)
+docker run --rm -t -d --user $UID:$GID \
+    --workdir="/home/$USER" --volume="/etc/group:/etc/group:ro" \
+    --name test-image -v <path to this repo>:/builds
+    --volume="/etc/passwd:/etc/passwd:ro" \
+    --volume="/etc/shadow:/etc/shadow:ro" \
+    test-image
+```
+Then to build using the above image:
+```sh
+docker exec test-image /builds/cmake_build.sh -b /builds/releases -e 1 -g 1 -u 1
+```
