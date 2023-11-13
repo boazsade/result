@@ -18,7 +18,8 @@ elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wlogical-op -Wfloat-conversion -Wdangling-else -Wconversion -Wcast-align -Wcast-qual -Wshadow")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wfloat-equal -Wstringop-overflow")
 endif()
-
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_CXX_STANDARD 17)
 enable_testing()
 find_package(GTest REQUIRED)
 add_executable(
