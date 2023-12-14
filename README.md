@@ -48,7 +48,7 @@ auto main(int argc, char** argv) -> int {
 ```
 Note that unlike normal return value from a function, you cannot ignore the result, and you must check whether you were successful or not.
 
-## Tests and Eamples
+## Tests and Examples
 The examples section here will contain more examples on how to use this. Take a look there.
 To run the unit test:
 ```sh
