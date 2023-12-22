@@ -131,10 +131,28 @@ struct result
     // unsafe access to the "good" result
     // it is better to first check whether we have this
     [[nodiscard]] constexpr auto unwrap() const -> const typename ok_type::type& {
-        return std::get<ok_type>(value);
+        return std::get<ok_type>(value).value;
     }
     [[nodiscard]] constexpr auto unwrap() -> typename ok_type::type&& {
-        return std::move(std::get<ok_type>(value).value);
+        return std::get<ok_type>(value).value;
+    }
+
+    // This is a "safe" version of unwrap, by this we mean that, unlike the
+    // unwrap version, that calling it when we have the error case, which can result
+    // in an exception, in this case, if we don't have the success value, then we will
+    // return some default value
+    [[nodiscard]] constexpr auto unwrap_or(const typename ok_type::type& some_default) const -> const typename ok_type::type& {
+        if (is_ok()) {
+            return unwrap();
+        }
+        return some_default;
+    }
+
+    [[nodiscard]] constexpr auto unwrap_or(typename ok_type::type&& some_default) -> typename ok_type::type&& {
+        if (is_ok()) {
+            return unwrap();
+        }
+        return some_default;
     }
 
     [[nodiscard]] constexpr explicit  operator bool() const {
@@ -147,40 +165,51 @@ struct result
     }
 
     [[nodiscard]] constexpr  auto error_value() -> typename error_type::type&& {
-        return std::get<error_type>(value);
+        return std::get<error_type>(value).value;
     }
 
     // in case we have successful result, run then_f
     template<typename F>
-    [[nodiscard]] auto and_then(F&& then_f) -> result<typename std::result_of<F(success_t)>::type,  failure_t> {
-        using new_type = result<typename std::result_of<F(success_t)>::type, failure_t>;
+    [[nodiscard]] auto and_then(F&& then_f) -> result<typename std::result_of<F(success_t)>::type::success_t,  failure_t> {
+        using new_success_t = typename std::result_of<F(failure_t)>::type::success_t;
+        using expected_t = typename std::result_of<F(failure_t)>::type::failure_t;
+        static_assert(std::is_same_v<expected_t, failure_t>);       // make sure that we are keeping the same error type, we cannot change it here
+        using new_type = result<new_success_t, failure_t>;
 
         if (is_error()) {
-            return new_type(std::move(std::get<error_type>(value)));
+            return new_type{std::move(std::get<error_type>(value))};
         }
-        return new_type(std::move(std::invoke(then_f, std::get<ok_type>(value).value)));
+        return new_type{std::invoke(then_f, std::move(std::get<ok_type>(value).value))};
     }
 
     // in case of an error, run the else_f
     template<typename F>
-    [[nodiscard]] auto or_else(F&& else_f) -> result<success_t, typename std::result_of<F(failure_t)>::type> {
-        using new_type = result<success_t, typename std::result_of<F(failure_t)>::type>;
+    [[nodiscard]] auto or_else(F&& else_f) -> result<success_t, typename std::result_of<F(failure_t)>::type::failure_t> {
+        using new_err_t = typename std::result_of<F(failure_t)>::type::failure_t;
+        using expected_t = typename std::result_of<F(failure_t)>::type::success_t;
+
+        static_assert(std::is_same_v<expected_t, success_t>);   // make sure that the function passed here return the correct result type
+
+        using new_type = result<success_t, new_err_t>;
 
         if (is_error()) {
-            return new_type(std::move(std::invoke(else_f, std::get<error_type>(value).value)));
+            return new_type{std::invoke(else_f, std::move(std::get<error_type>(value).value))};
         }
-        return new_type(std::move(std::get<ok_type>(value)));
+        return new_type{std::move(std::get<ok_type>(value))};
     }
 
     // map an error to another error, or return the new type of result unaffected in case it didn't fail
     template<typename F>
-    [[nodiscard]] auto map_err(F&& map_f)  -> result<success_t, typename std::result_of<F(failure_t)>::type> {
-        using new_type = result<success_t, typename std::result_of<F(failure_t)>::type>;
+    [[nodiscard]] auto map_err(F&& map_f)  -> result<success_t, typename std::result_of<F(failure_t)>::type::failure_t> {
+        using new_err_t = typename std::result_of<F(failure_t)>::type::failure_t;
+        using expected_t = typename std::result_of<F(failure_t)>::type::success_t;
+        static_assert(std::is_same_v<expected_t, success_t>);   // make sure that the function passed here return the correct result type
+        using new_type = result<success_t, new_err_t>;
 
         if (is_error()) {
-            return new_type(std::move(std::invoke(map_f, std::get<error_type>(value).value)));
+            return new_type{std::invoke(map_f, std::move(std::get<error_type>(value).value))};
         }
-        return new_type(std::move(unwrap()));
+        return new_type(std::move(std::get<ok_type>(value)));
     }
 
 private:
