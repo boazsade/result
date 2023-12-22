@@ -25,7 +25,7 @@ auto foo(int a, int b) -> result<int. int> {
   if (a < b) {
     return ok{a + b};
   } else {
-    return failed(a - b};
+    return failed{a - b};
   }
 }
 
@@ -44,9 +44,68 @@ auto main(int argc, char** argv) -> int {
   } else {
     std::cerr<< "usage: <num 1> <num2> ..\n";
     return -1;
+  }
 }
 ```
 Note that unlike normal return value from a function, you cannot ignore the result, and you must check whether you were successful or not.
+
+### Monadic Operations
+Just like in Rust, you can use monadic options to chain operations based on the results.
+You have these operations:
+- and_then: This will run a function if the last result is successfully. Note that the result of this function should be of type "result" and the the fail case must match the original function.
+- or_else: This will run a function if the last result is failure. Note that the result of this function should be of type "result" and the the success case must match the original function.
+- unwrap_or: This will try to extract the success value or return some default value that you are passing to the function.
+- map_err: this will return some new result, where the success type is the same, but the error is mapped to new type based on some function.
+For example:
+```cpp
+auto foo(int a, int b) -> result<int, int> {
+  if (a < b) {
+    return ok(a + b);
+  } else {
+    return failed(a - b);
+  }
+}
+
+auto bar(std::string_view s1, char ch) -> result<std::string, int> {
+  auto it = std::find(s1.begin(), s1.end(), ch);
+  if (it == s1.end()) {
+    return ok(std::string{s1});
+  }
+  return failed(-1);
+}
+
+struct error_case {
+  explicit error_case(std::string_view e) : error{e} {
+
+  }
+
+  std::string error;
+};
+
+auto main() -> int {
+  const int b = 10, a = 20;
+    const int factor = 5;
+    const auto r = foo(a, b).or_else([factor](auto e) -> result<int, int> {
+        return ok(e * factor);
+    });
+
+    const auto r = bar("some string", ' ').or_else([](auto&& e) -> result<std::string, error_case> {
+        // the error type here is int, lets convert this to enum
+        return failed(error_case("I didn't like what I see here: " + std::to_string(e)));
+    });
+
+    const std::string expected_value = "expected";
+
+    const auto r = bar("this is a string", ' ').unwrap_or(expected_value);
+    const auto r = bar("some string", '+').and_then([](auto&& e) -> result<std::string, int> {
+        // the error type here is int, lets convert this to enum
+        return failed(int(e.size()));
+    });
+}
+```
+Note that for lambda function, you may need to explicitly set the return type since this sometime cannot be deduce from the lambda itself.
+Note that even in Rust this is required, so I don't see this as a reason to change.
+
 
 ## Tests and Examples
 The examples section here will contain more examples on how to use this. Take a look there.
@@ -68,3 +127,7 @@ Then to build using the above image:
 ```sh
 docker exec test-image /builds/cmake_build.sh -b /builds/releases -e 1 -g 1 -u 1
 ```
+## Build
+You can build the unit tests (since the usage of this is a single H file that don't need to be built), using cmake.
+Note that you have some help files that can help you build automatically (all of them are based on the file "build.sh").
+You can also run the builds and tests with the dockerfile that is located here.
