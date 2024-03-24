@@ -8,6 +8,12 @@
 namespace internal
 {
 
+template<typename T>
+struct pod_type  {
+	static constexpr bool value = std::is_standard_layout_v<T> && 
+		std::is_trivial_v<T>;
+};
+
 template <typename T, const bool POD> 
 struct basic_result_type {
     using type = T;
@@ -35,7 +41,7 @@ struct basic_result_type<T, true> {
 template<typename T>
 struct simple_type {
 	static constexpr bool value = std::is_fundamental<T>::value || 
-				std::is_pod_v<T> || 
+				pod_type<T>::value || 
 				std::is_pointer<T>::value;
 };
 
