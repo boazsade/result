@@ -1,5 +1,15 @@
 # result
-this is a simple Rust like result to be used in function calls
+this is a simple Rust like result to be used in function calls.
+
+# Cloning
+This depends on git submodule,  so you to clone with submodules as well:
+```bash
+git clone --recurse-submodules https://github.com/boazsade/result.git
+```
+or if you're closing with ssh:
+```bash
+git clone --recurse-submodules git@github.com:boazsade/result.git
+```
 
 ## Overview
 In many function programming languages you have the monadic type that is used as a result from a function.
@@ -9,12 +19,42 @@ In Rust we have [std::result](https://doc.rust-lang.org/std/result/). This algeb
 Unlike C++ Rust don't have support for exceptions.
 The thing about exceptions is that they are expensive to use when they fail, and they should be used only for those cases where we are not expecting to continue.
 Unlike exception, result allow the programmer to take action in case of a failure, and they are cheap.
-C++ 23 will add support for this idom [the std::expected](https://en.cppreference.com/w/cpp/utility/expected). This is not fully compatible with Rust as C++ lack the pattern matching that is used with Result and it also lacks that "?" to short cyrcte in case of a failure.
+C++ 23 will add support for this idom [the std::expected](https://en.cppreference.com/w/cpp/utility/expected). This is not fully compatible with Rust as C++ lack the pattern matching that is used with Result and it also lacks that "?" to short circuit in case of a failure.
+
+### Some notes regarding error handling
+The term "error" is a little board in regard to programming.
+I general there can be at least two categories:
+1. Critical error that we cannot recover from. These error can only lead to graceful restart of the current state.
+2. Failure of execution. This is the case where a function was called, but it cannot perform it task.
+#### Critical Errors:
+An example for this case is where we are trying to allocate memory to the application from the free heap, and the operation fails.
+This is a none recoverable state, and any attempt to continue from this point, will only worsen the state at which we are right now.
+These family of errors is best covered by C++ exceptions. I tried to do something and I came across an unrecoverable state, where the only sane solution is to unwind the stack and leave.
+This is indeed an error and is rightfully called exception, because this is indeed some exceptional case that is not part of the normal flow of the application.
+> Note that this "result" type is not meant in any way to replace it.
+#### Results
+When a function is run, it should be able to report correctly what was the result of it execution. These results must not be ignored and they also must be different when the function was successful or not.
+For example the function `atoi` in the function programming language will always return an `int`, but whether this function was successful or not cannot be determine from its result. Any integer value is a "good" value.
+On the other hand we would not like to make the call not agronomical (for example not returning an `int` in case of success), and in case where the argument to the function cannot be interrupt as `int` there is no real reason to throw an exception.
+In this case we can use the `result` type. We can return an `int` in case we successfully parsed the all string as `int` or return a failure in case this is not really an `int`, but with detail. In this case, the caller will know what went wrong, and either handle only the case where the translation was successful, or when it failed or produce a default value. for example:
+```cpp
+if (const auto as_int = std::atoi(some_string); as_int) {
+  // we only care if success, ignore the error case
+}
+
+if (const auto as_int_fail = Err(std::atoi(some_string))) {
+  // handle the case where this is not an int
+}
+
+const auto my_int = std::atoi(some_sting).or_else([](const auto&) -> <int, int>  {
+  return 0; // produce 0 in case we failed
+});
+```
 
 ## Usage
 In this case I tries to make the code as simple as possible and use as much C++ exiting support without re-inventing the wheel. 
 The requirement is for C++ 17 support in your compiler (though this is required only on a single place in the code).
-> Please note that this is now set to use C++20 but there is no real requirement for it in the code itself).
+> Please note that this is now set to use C++20 but there is no real requirement for it in the code itself.
 
 A simple use case would look like:
 ```cpp
@@ -134,7 +174,7 @@ Or if you're running on a Linux like environment you can run it using the script
 The examples section here will contain more examples on how to use this. Take a look there.
 To run the unit test:
 ```sh
-docker build -t test-image ,
+docker build -t test-image -f dev-container/Dockerfile ,
 ```
 And then
 ```sh
@@ -148,9 +188,21 @@ docker run --rm -t -d --user $UID:$GID \
 ```
 Then to build using the above image:
 ```sh
-docker exec test-image /builds/cmake_build.sh -b /builds/releases -e 1 -g 1 -u 1
+docker exec test-image /builds/dev-container/build.sh -b /builds/releases -e 1 -g 1 -u 1
 ```
 ## Build
 You can build the unit tests (since the usage of this is a single H file that don't need to be built), using cmake.
 Note that you have some help files that can help you build automatically (all of them are based on the file "build.sh").
 You can also run the builds and tests with the dockerfile that is located here.
+Using the build scripts for debug:
+```bash
+dev-container/build.sh -g 1 -t Debug -b build-debug
+dev-container/build.sh -t Debug -b build-debug
+```
+For release
+```bash
+dev-container/build.sh -g 1 -t Release -b build-release
+dev-container/build.sh -t Release -b build-release
+```
+Or you can manually run the cmake commands to generate the builds.
+Note that this since this is an header only implementation you don't really need to build it.
