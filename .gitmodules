@@ -1,0 +1,3 @@
+[submodule "dev-container"]
+	path = dev-container
+	url = git@github.com:boazsade/dev-container.git
