@@ -106,7 +106,7 @@ cd ${BUILD_DIR} || {
     exit 1
 }
 if [ ${GENERATE} -eq 1 ]; then
-    conan install ${SOURCES}  --output-folder=. --build=missing || {
+    conan install ${SOURCES}  --output-folder=. --build=missing --settings=build_type=${BUILD_TYPE} || {
 	 echo "failed to install conan dependecies"
     	 exit 1
     }
