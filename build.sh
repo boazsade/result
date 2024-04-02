@@ -106,7 +106,17 @@ cd ${BUILD_DIR} || {
     exit 1
 }
 if [ ${GENERATE} -eq 1 ]; then
-    cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DENABLE_CLANG_TIDY=${SANITIZER_OP} -DENABLE_MEMORY_PROFILER=${MEMORY_PROFILER} -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -G Ninja ${SOURCES} || {
+    conan install ${SOURCES}  --output-folder=. --build=missing --settings=build_type=${BUILD_TYPE} || {
+	 echo "failed to install conan dependecies"
+    	 exit 1
+    }
+    cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1 \
+	    -DENABLE_CLANG_TIDY=${SANITIZER_OP} \
+	    -DENABLE_MEMORY_PROFILER=${MEMORY_PROFILER} \
+	    -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+	    -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake \
+	    -DCMAKE_POLICY_DEFAULT_CMP0091=NEW \
+	    -G Ninja ${SOURCES} || {
         echo "failed to generate cmake project at ${BUILD_DIR}"
         exit 1
     }

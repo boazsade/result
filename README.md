@@ -2,18 +2,19 @@
 this is a simple Rust like result to be used in function calls
 
 ## Overview
-In many function programing langauges you have the monadic type that is used as a result from a function.
-A function can either run a good result, or failed with some posiblly other type.
-This idom is used in the [Rust programing langauge](https://www.rust-lang.org/). 
-In Rust we have [std::result](https://doc.rust-lang.org/std/result/). This algebric type is used in Rust for basically every function that can fail.
+In many function programming languages you have the monadic type that is used as a result from a function.
+A function can either run a good result, or failed with some possibly other type.
+This idiom is used in the [Rust programming language](https://www.rust-lang.org/). 
+In Rust we have [std::result](https://doc.rust-lang.org/std/result/). This algebraic type is used in Rust for basically every function that can fail.
 Unlike C++ Rust don't have support for exceptions.
 The thing about exceptions is that they are expensive to use when they fail, and they should be used only for those cases where we are not expecting to continue.
 Unlike exception, result allow the programmer to take action in case of a failure, and they are cheap.
-C++ 23 will add support for this idom [the std::expected](https://en.cppreference.com/w/cpp/utility/expected). This is not fully competible with Rust as C++ lack the pattern matching that is used with Result and it also lacks that "?" to short circte in case of a failure.
+C++ 23 will add support for this idom [the std::expected](https://en.cppreference.com/w/cpp/utility/expected). This is not fully compatible with Rust as C++ lack the pattern matching that is used with Result and it also lacks that "?" to short cyrcte in case of a failure.
 
 ## Usage
 In this case I tries to make the code as simple as possible and use as much C++ exiting support without re-inventing the wheel. 
-The requirement is for C++ 17 support in your compiler (though this is required only on a single place in the code.
+The requirement is for C++ 17 support in your compiler (though this is required only on a single place in the code).
+> Please note that this is now set to use C++20 but there is no real requirement for it in the code itself).
 
 A simple use case would look like:
 ```cpp
@@ -106,6 +107,28 @@ auto main() -> int {
 Note that for lambda function, you may need to explicitly set the return type since this sometime cannot be deduce from the lambda itself.
 Note that even in Rust this is required, so I don't see this as a reason to change.
 
+## Build
+This project contain cmake in order to build its tests.
+The actual code is not require any build since it is header only.
+Please note that in order to build locally you would need to have conan support on install the dependencies yourself.
+> In general the only real requirement to run the tests is to have [google's gtest](https://github.com/google/googletest).
+You can manually set this with the commands:
+```bash
+conan install .  --output-folder=build --build=missing
+cd build
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1 \
+	    -DCMAKE_BUILD_TYPE=<Debug|Release> \
+	    -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake \
+	    -DCMAKE_POLICY_DEFAULT_CMP0091=NEW \
+	    -G Ninja ..
+cmake --build .
+ctest --progress -VV
+```
+Or if you're running on a Linux like environment you can run it using the scripts:
+* build.sh -> this will build with a list of arguments (run ./build.sh --help for the full details on the available options).
+* build-debug.sh -> will build a debug version using the above script.
+* build-release.sh -> build a release version using build.sh
+* If you Docker installed you can using the scripts 'docker_setup.sh' 'init_build.sh' to run the builds inside the container that has all the dependencies ready.
 
 ## Tests and Examples
 The examples section here will contain more examples on how to use this. Take a look there.

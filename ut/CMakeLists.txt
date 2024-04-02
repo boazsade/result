@@ -3,7 +3,7 @@
 include(dependencies)
 include(flags)
 set(CMAKE_C_STANDARD 99)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 enable_testing()
 list(APPEND EXTRA_INCLUDES $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}> $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>)
 find_package(GTest REQUIRED)
