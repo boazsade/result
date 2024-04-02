@@ -23,7 +23,9 @@ jobs:
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
+              with:
+                submodules: true
             - name: Build
               run: |
-                ./build.sh -g 1 -t ${{ matrix.build-type }} -b build/${{ matrix.build-type }}
-                ./build.sh -t ${{ matrix.build-type }} -b build/${{ matrix.build-type }} -u 1
+                ./dev-container/build.sh -g 1 -t ${{ matrix.build-type }} -b build/${{ matrix.build-type }}
+                ./dev-container/build.sh -t ${{ matrix.build-type }} -b build/${{ matrix.build-type }} -u 1
