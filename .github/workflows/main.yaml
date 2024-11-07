@@ -11,7 +11,7 @@ jobs:
         runs-on: ubuntu-latest
         strategy:
             matrix:
-                container: ["ubuntu22-dev:latest"]
+                container: ["ubuntu-latest-dev:latest"]
                 build-type: [Debug, Release]
                 compiler: [{ cxx: g++, c: gcc }]
         timeout-minutes: 60
